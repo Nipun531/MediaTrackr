@@ -1,0 +1,101 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         Int             @id @default(autoincrement())
+  firstname  String
+  lastname   String
+  email      String          @unique
+  password   String
+  gender     String?
+  age        Int?
+  location   String?
+  bio        String?
+  media      Media[]         @relation("UserMedia")
+  favourites UserFavourite[] // many-to-many
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+}
+
+model Media {
+  id         Int             @id @default(autoincrement())
+  user       User            @relation("UserMedia", fields: [userId], references: [id])
+  userId     Int
+  type       MediaType
+  mediaId    Int // Will point to either Movie, Show, or Novel
+  edits      Int             @default(0)
+  favourite  Boolean         @default(false)
+  favourites UserFavourite[] // 👈 add this line
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+}
+
+model Movie {
+  id          Int       @id @default(autoincrement())
+  name        String
+  episode     Int       @default(1)
+  dateStarted DateTime
+  releaseDate DateTime?
+  synopsis    String?
+  director    String?
+  favourite   Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Show {
+  id              Int       @id @default(autoincrement())
+  name            String
+  totalEpisodes   Int
+  watchedEpisodes Int       @default(0)
+  dateStarted     DateTime
+  releaseDate     DateTime?
+  synopsis        String?
+  creator         String?
+  favourite       Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model Novel {
+  id          Int       @id @default(autoincrement())
+  name        String
+  totalPages  Int
+  pagesRead   Int       @default(0)
+  dateStarted DateTime
+  releaseDate DateTime?
+  synopsis    String?
+  author      String?
+  favourite   Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model UserFavourite {
+  user   User @relation(fields: [userId], references: [id])
+  userId Int
+
+  media   Media @relation(fields: [mediaId], references: [id])
+  mediaId Int
+
+  @@id([userId, mediaId]) // Composite primary key for many-to-many
+}
+
+enum MediaType {
+  Movie
+  Show
+  Novel
+}

@@ -1,0 +1,121 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         Int             @id @default(autoincrement())
+  firstname  String
+  lastname   String
+  email      String          @unique
+  password   String
+  gender     String?
+  age        Int?
+  location   String?
+  bio        String?
+
+  media      Media[]         @relation("UserMedia")
+  favourites UserFavourite[] @relation("UserFavourites")
+   posts      Post[]          @relation("UserPosts")
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+}
+
+model Media {
+  id         Int             @id @default(autoincrement())
+  user       User            @relation("UserMedia", fields: [userId], references: [id])
+  userId     Int
+
+  type       MediaType
+  mediaId    Int             // Points to Movie, Show, or Novel (pseudo-polymorphic)
+  edits      Int             @default(0)
+  favourite  Boolean         @default(false)
+
+  favourites UserFavourite[] @relation("MediaFavourites")
+
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+}
+
+model Movie {
+  id          Int      @id @default(autoincrement())
+  name        String
+  episode     Int      @default(1)
+  dateStarted DateTime
+  releaseDate DateTime?
+  synopsis    String?
+  director    String?
+  favourite   Boolean  @default(false)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Show {
+  id              Int      @id @default(autoincrement())
+  name            String
+  totalEpisodes   Int
+  watchedEpisodes Int      @default(0)
+  dateStarted     DateTime
+  releaseDate     DateTime?
+  synopsis        String?
+  creator         String?
+  favourite       Boolean  @default(false)
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Novel {
+  id          Int      @id @default(autoincrement())
+  name        String
+  totalPages  Int
+  pagesRead   Int      @default(0)
+  dateStarted DateTime
+  releaseDate DateTime?
+  synopsis    String?
+  author      String?
+  favourite   Boolean  @default(false)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model UserFavourite {
+  user     User  @relation("UserFavourites", fields: [userId], references: [id])
+  userId   Int
+
+  media    Media @relation("MediaFavourites", fields: [mediaId], references: [id])
+  mediaId  Int
+
+  @@id([userId, mediaId]) // Composite primary key
+}
+
+enum MediaType {
+  Movie
+  Show
+  Novel
+}
+
+
+model Post {
+  id         Int             @id @default(autoincrement())
+  user       User            @relation("UserPosts", fields: [userId], references: [id])
+  userId     Int
+  category   Categories
+  title      String
+  body       String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum Categories {
+  Movie
+  Show
+  Novel
+  General
+}
